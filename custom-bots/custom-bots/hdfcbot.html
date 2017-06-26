@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- 
+NOTE: This sample requires a bot which can send and receive specific event messages. Follow the instructions on 
+https://github.com/ryanvolum/backChannelBot to deploy such a bot. 
+
+This is a sample HTML file which shows how to embed an instance of WebChat which listens for event activities. For the sake
+of demonstration it specifically listens for events of name "changeBackground". Using the backChannelBot sample 
+our page can listen for events of name "changeBackground" and send events of name "buttonClicked". This 
+highlights the ability for a bot to communicate with a page that embeds the bot through WebChat. 
+ 
+1. Build the project: "npm run build"
+2. Start a web server: "npm run start"
+3. Aim your browser at "http://localhost:8000/samples/backchannel?[parameters as listed below]"
+
+For ease of testing, several parameters can be set in the query string:
+    * s = Direct Line secret, or
+    * t = Direct Line token (obtained by calling Direct Line's Generate Token)
+    * domain = optionally, the URL of an alternate Direct Line endpoint
+    * webSocket = set to 'true' to use WebSocket to receive messages (currently defaults to false)
+    * userid, username = id (and optionally name) of bot user
+    * botid, botname = id (and optionally name) of bot
+-->
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<title>Bot Chat</title>
+	<link href="default.css" rel="stylesheet" />
+    <link href="custom.css" rel="stylesheet" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+</head>
+
+<body>
+	<div id="BotChatGoesHere" class="wc-narrow"></div>
+	<!-- <script src="https://unpkg.com/botframework-webchat/botchat.js"></script> -->
+    <script src="https://unpkg.com/botframework-webchat/botchat.js"></script>
+	<script>
+            var params = BotChat.queryParams(location.search);
+
+            var user = {
+                id: params['userid'] || '001',
+                name: params["username"] || 'Employee Name'
+                };
+            
+             var bot = {
+                id: params['botid'] || '4490c8ed-3c86-469f-a1f7-fc747d8fe30a',
+                name: params["botname"] || 'ella'
+            };
+
+            window['botchatDebug'] = params['debug'] && params['debug'] === "true";
+
+            var botConnection = new BotChat.DirectLine({
+                secret: 'I8Qocv4p0Hg.cwA.jOs.Ln-pArjhJZTAmbnIuCdlaXGRlNY274EBFimOqG5T8p8',
+                token: params['t'],
+                domain: params['domain'],
+                webSocket: params['webSocket'] && params['webSocket'] === "true" // defaults to true
+            });
+
+            BotChat.App({
+                botConnection: botConnection,
+                user: user,
+                bot: bot
+            }, document.getElementById("BotChatGoesHere"));
+
+            botConnection.activity$
+                .filter(activity => activity.type === "event" && activity.name === "changeBackground")
+                .subscribe(activity => changeBackgroundColor(activity.value))
+
+            const changeBackgroundColor = (newColor) => {
+                document.body.style.backgroundColor = newColor;
+            }
+
+            const postButtonMessage = () => {
+                botConnection
+                    .postActivity({type: "event", value: "Abc", from: {id: "me" }, name: "buttonClicked"})
+                    .subscribe(id => console.log("success"));
+            }
+
+        </script>
+</body>
+
+</html>
